@@ -59,3 +59,12 @@ displayBoard:-
 
  %%%% Start the game!
 init :- length(Board,42), assert(board(Board)), play().
+
+
+% Calculate the score of each player
+scoreColunm4([],_,0,[]).
+scoreColunm4([P|L],P,S,[V|Val]):-scoreColunm4(L,P,S1,Val),S is S1+V.
+scoreColunm4([H|L],P,S,[V|Val]):-H\=P,scoreColunm4(L,P,S,Val).
+
+score([],_,0,[]).
+score([H|L],P,S,[V|Val]):-score(L,P,S1,Val),scoreColunm4(H,P,S2,V),S is S1+S2.
