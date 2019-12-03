@@ -1,3 +1,15 @@
+%Horizontal
+caseHorizontalWin(X,[[X|_],[X|_],[X|_],[X|_],_,_,_]).
+caseHorizontalWin(X,[_,[X|_],[X|_],[X|_],[X|_],_,_]).
+caseHorizontalWin(X,[_,_,[X|_],[X|_],[X|_],[X|_],_]).
+caseHorizontalWin(X,[_,_,_,[X|_],[X|_],[X|_],[X|_]]).
+caseHorizontalWin(J,[[X|A],[Y|B],[W|C],[Z|D],E,F,G]):-(X\==Y;Y\==W;W\==Z),caseHorizontalWin(J,[A,B,C,D,E,F,G]).
+caseHorizontalWin(J,[A,[X|B],[Y|C],[W|D],[Z|E],F,G]):-(X\==Y;Y\==W;W\==Z),caseHorizontalWin(J,[A,B,C,D,E,F,G]).
+caseHorizontalWin(J,[A,B,[X|C],[Y|D],[W|E],[Z|F],G]):-(X\==Y;Y\==W;W\==Z),caseHorizontalWin(J,[A,B,C,D,E,F,G]).
+caseHorizontalWin(J,[A,B,C,[X|D],[Y|E],[W|F],[Z|G]]):-(X\==Y;Y\==W;W\==Z),caseHorizontalWin(J,[A,B,C,D,E,F,G]).
+winH(P,L):-caseHorizontalWin(P,L).
+
+
 %%%% Print the value of the board at index N:
 % if its a variable, print ? and x or o otherwise.
 printVal(N) :- board(B), nth0(N,B,Val), var(Val), write('?'), !.
@@ -6,8 +18,9 @@ printVal(N) :- board(B), nth0(N,B,Val), write(Val).
 caseWinV(X,[X,X,X,X,_,_]).
 caseWinV(X,[_,X,X,X,X,_]).
 caseWinV(X,[_,_,X,X,X,X]).
-winV([H|L],P):-caseWinV(P,H).
-winV([H|L],P):-winV(L,P).
+winV(P,[H|L]):-caseWinV(P,H).
+winV(P,[H|L]):-winV(L,P).
+
 
 %Diag
 caseDiagWin(X,[[X,_,_,_,_,_],[_,X,_,_,_,_],[_,_,X,_,_,_],[_,_,_,X,_,_],[_,_,_,_,_,_],[_,_,_,_,_,_],[_,_,_,_,_,_]]).
@@ -41,3 +54,28 @@ caseDiagWin(X,[[_,_,_,X,_,_],[_,_,X,_,_,_],[_,X,_,_,_,_],[X,_,_,_,_,_],[_,_,_,_,
 caseDiagWin(X,[[_,_,_,_,_,_],[_,_,_,_,_,_],[_,_,_,_,_,_],[_,_,_,_,_,X],[_,_,_,_,X,_],[_,_,_,X,_,_],[_,_,X,_,_,_]]).
 
 winDiag(P,L):-caseDiagWin(P,L).
+
+win(P,L):- winH(P,L).
+win(P,L):-winV(P,L).
+win(P,L):-winDiag(P,L).
+
+%coupGagnant(Joueur,Grille avant,Grille apres)
+% coupGagnant(P,GrilleAvant,GrilleApres):-
+% jouerUnCoup(GrilleAvant,GrilleApres,P,),win(P,GrilleApres).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

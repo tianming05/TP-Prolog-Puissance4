@@ -1,9 +1,0 @@
-%Horizontal
-caseHorizontalWin([[X|_],[X|_],[X|_],[X|_],_,_,_]).
-caseHorizontalWin([_,[X|_],[X|_],[X|_],[X|_],_,_]).
-caseHorizontalWin([_,_,[X|_],[X|_],[X|_],[X|_],_]).
-caseHorizontalWin([_,_,_,[X|_],[X|_],[X|_],[X|_]]).
-caseHorizontalWin([[X|A],[Y|B],[W|C],[Z|D],E,F,G]):-(X\==Y;Y\==W;W\==Z),caseHorizontalWin([A,B,C,D,E,F,G]).
-caseHorizontalWin([A,[X|B],[Y|C],[W|D],[Z|E],F,G]):-(X\==Y;Y\==W;W\==Z),caseHorizontalWin([A,B,C,D,E,F,G]).
-caseHorizontalWin([A,B,[X|C],[Y|D],[W|E],[Z|F],G]):-(X\==Y;Y\==W;W\==Z),caseHorizontalWin([A,B,C,D,E,F,G]).
-caseHorizontalWin([A,B,C,[X|D],[Y|E],[W|F],[Z|G]]):-(X\==Y;Y\==W;W\==Z),caseHorizontalWin([A,B,C,D,E,F,G]).
