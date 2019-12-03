@@ -1,28 +1,29 @@
 :- dynamic board/1.
 
-%MÃ©thodes gÃ©nÃ©rales
+%Méthodes générales
 incr(X, X1) :- X1 is X+1.
 decr(X,X1):- X1 is X-1.
 
-%Renvoie l'index d'une case Ã  partir de la ligne L et de la colonne C.
+%Renvoie l'index d'une case à partir de la ligne L et de la colonne C.
 indexCase(C,L,Index):- Index is C+(5-L)*7.
 
-%DÃ©fini si une case X est vide : renvoie true si X est vide
-caseLibre(X, Board):- nth0(X,Board,Val), var(Val).
+%Défini si une case X est vide : renvoie true si X est vide
+caseLibre(Colonne,Ligne, Board):- nth0(Colonne,Board,Liste), nth0(Ligne,Liste,Val), var(Val).
 
-%VÃ©rifie si la Colonne est valide:
+%Vérifie si la Colonne est valide:
 %1-  0<Colonne<6
 %2-  La Colonne n'est pas remplie
-possible(Colonne,Board):- Colonne@>=0,Colonne@=<6, indexCase(Colonne,5,Index), caseLibre(Index,Board).
+possible(Colonne,Board):- Colonne@>=0,Colonne@=<6, caseLibre(Colonne,6,Board).
 possible(Colonne,Board):-  writeln('Coup invalide, Veuillez rentrer une nouvelle colonne'), play().
 
 %Trouve a quel endroit placer le pion en fonction de la colonne.
 % retourne l'indice de la premiere case vide de la colonne
-calculPosition(Colonne,LigneActuelle,LigneActuelle,Board):- indexCase(Colonne,LigneActuelle,Index), caseLibre(Index,Board),!.
+calculPosition(Colonne,LigneActuelle,LigneActuelle,Board):- caseLibre(Colonne,LigneActuelle,Board),!.
 calculPosition(Colonne,LigneActuelle,BonneLigne,Board):- incr(LigneActuelle,LignePrecedente), calculPosition(Colonne,LignePrecedente,BonneLigne,Board).
 
 %Jouer un pion a l'emplacement Move
-playMove(Board,Move,NewBoard,Player) :- Board=NewBoard, nth0(Move,NewBoard,Player).
+playMove(Board,Colonne,Ligne,NewBoard,Player) :- nth0(Colonne,Board,Liste), nth0(Ligne,Liste,Player),Board=NewBoard, nth0(Colonne,NewBoard,Liste).
+
 %Actualiser le plateau
 applyIt(Board,NewBoard) :- retract(board(Board)), assert(board(NewBoard)).
 
@@ -32,37 +33,43 @@ play():-
  read(Colonne),
  possible(Colonne,Board),
  calculPosition(Colonne,0,BonneLigne,Board),
- indexCase(Colonne,BonneLigne,Index),
- playMove(Board,Index,NewBoard,'x'),
+ playMove(Board,Colonne,BonneLigne,NewBoard,'x'),
  applyIt(Board,NewBoard),
  play().
 
 
+%Retourne la Nème liste
+getList(N,L):- board(B), nth0(N,B,L).
 
 %%%% Print the value of the board at index N:
-% if its a variable, print  and x or o otherwise.
-printVal(N) :- board(B), nth0(N,B,Val), var(Val), write(' '), !.
-printVal(N) :- board(B), nth0(N,B,Val), write(Val).
+% if iths a variable, print  and x or o otherwise.
+printVal(N,L) :-  nth0(N,L,Val), var(Val), write(' '), !.
+printVal(N,L) :- nth0(N,L,Val), write(Val).
 
 
 displayBoard:-
  writeln('*-------------*'),
- printVal(0),write('|'), printVal(1),write('|'), printVal(2),write('|'),printVal(3),write('|'), printVal(4),write('|'),printVal(5),write('|'), printVal(6), writeln('|'),
- printVal(7),write('|'), printVal(8),write('|'), printVal(9),write('|'),printVal(10),write('|'), printVal(11),write('|'), printVal(12),write('|'), printVal(13), writeln('|'),
- printVal(14),write('|'), printVal(15),write('|'), printVal(16),write('|'),printVal(17),write('|'), printVal(18),write('|'),printVal(19),write('|'), printVal(20), writeln('|'),
- printVal(21),write('|'), printVal(22),write('|'), printVal(23),write('|'),printVal(24),write('|'), printVal(25),write('|'),printVal(26),write('|'), printVal(27), writeln('|'),
- printVal(28),write('|'), printVal(29),write('|'), printVal(30),write('|'),printVal(31),write('|'), printVal(32),write('|'),printVal(33),write('|'), printVal(34), writeln('|'),
- printVal(35),write('|'), printVal(36),write('|'), printVal(37),write('|'),printVal(38),write('|'), printVal(39),write('|'),printVal(40),write('|'), printVal(41), writeln('|'),
+
+ getList(0,L),printVal(6,L),write('|'),getList(1,L1), printVal(6,L1),write('|'),getList(2,L2), printVal(6,L2),write('|'),getList(3,L3), printVal(6,L3),write('|'),getList(4,L4), printVal(6,L4),write('|'),getList(5,L5), printVal(6,L5),write('|'), getList(6,L6), printVal(6,L6), writeln('|'),
+
+ getList(0,L),printVal(5,L),write('|'),getList(1,L1), printVal(5,L1),write('|'),getList(2,L2), printVal(5,L2),write('|'),getList(3,L3), printVal(5,L3),write('|'),getList(4,L4), printVal(5,L4),write('|'),getList(5,L5), printVal(5,L5),write('|'), getList(6,L6), printVal(5,L6), writeln('|'),
+
+getList(0,L),printVal(4,L),write('|'),getList(1,L1), printVal(4,L1),write('|'),getList(2,L2), printVal(4,L2),write('|'),getList(3,L3), printVal(4,L3),write('|'),getList(4,L4), printVal(4,L4),write('|'),getList(5,L5), printVal(4,L5),write('|'), getList(6,L6), printVal(4,L6), writeln('|'),
+
+ getList(0,L),printVal(3,L),write('|'),getList(1,L1), printVal(3,L1),write('|'),getList(2,L2), printVal(3,L2),write('|'),getList(3,L3), printVal(3,L3),write('|'),getList(4,L4), printVal(3,L4),write('|'),getList(5,L5), printVal(3,L5),write('|'), getList(6,L6), printVal(3,L6), writeln('|'),
+ getList(0,L),printVal(2,L),write('|'),getList(1,L1), printVal(2,L1),write('|'),getList(2,L2), printVal(2,L2),write('|'),getList(3,L3), printVal(2,L3),write('|'),getList(4,L4), printVal(2,L4),write('|'),getList(5,L5), printVal(2,L5),write('|'), getList(6,L6), printVal(2,L6), writeln('|'),
+ getList(0,L),printVal(1,L),write('|'),getList(1,L1), printVal(1,L1),write('|'),getList(2,L2), printVal(1,L2),write('|'),getList(3,L3), printVal(1,L3),write('|'),getList(4,L4), printVal(1,L4),write('|'),getList(5,L5), printVal(1,L5),write('|'), getList(6,L6), printVal(1,L6), writeln('|'),
+
+
+ getList(0,L),printVal(0,L),write('|'),getList(1,L1), printVal(0,L1),write('|'),getList(2,L2), printVal(0,L2),write('|'),getList(3,L3), printVal(0,L3),write('|'),getList(4,L4), printVal(0,L4),write('|'),getList(5,L5), printVal(0,L5),write('|'), getList(6,L6), printVal(0,L6), writeln('|'),
 
  writeln('*-------------*').
 
 
  %%%% Start the game!
-init :- length(Board,42), assert(board(Board)), play().
+init :- length(Board,7), assert(board(Board)), play().
 
-
-
-%Calculate the score of each player
+% Calculate the score of each player
 scoreColunm4([],_,0,[]).
 scoreColunm4([P|L],P,S,[V|Val]):-scoreColunm4(L,P,S1,Val),S is S1+V.
 scoreColunm4([H|L],P,S,[V|Val]):-H\=P,scoreColunm4(L,P,S,Val).
