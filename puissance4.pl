@@ -46,6 +46,35 @@ getList(N,L):- board(B), nth0(N,B,L).
 printVal(N,L) :-  nth0(N,L,Val), var(Val), write(' '), !.
 printVal(N,L) :- nth0(N,L,Val), write(Val).
 
+%%%% Implements MinMax Algorithm
+
+choseBestMove(CurrentConfig,Computer,Move):-
+	set_of(M,movePossible(CurrentConfig,M),Moves),
+	chooseMove(Moves,CurrentConfig,1,1,(nil,-1000),(Move,Value)).
+
+chooseMove([Move|Moves],CurrentConfig,Depth,Flag,Record,Best):-
+	movePossible(Move,CurrentConfig,NewConfig),
+	minmax(Depth,NewConfig,Flag,Move,Value).
+	update(Move,Value,Record,Record1),
+	chooseMove(Moves,CurrentConfig,Depth,Flag,Record1,Best).
+chooseMove([],CurrentConfig,Depth,Flag,Record,Record).
+
+minmax(0,CurrentConfig,Flag,Move,Value):-
+	value(CurrentConfig,C),%% We are returning the final value 
+	Value:=C * Flag.
+
+minmax(Depth,CurrentConfig,Flag,Move,Value):-
+	set_of(M,movePossible(CurrentConfig,M),Moves),
+	FlagBis:=-Flag,
+	DepthBis:=Depth-1,
+	chooseMove(Moves,CurrentConfig,DepthBis,FlagBis,(nil,-1000),(Move,Value)).
+	
+update(Move,Value,(MoveBis,ValueBis),(MoveBis,ValueBis)):-
+	Value <= ValueBis.
+
+update(Move,Value,(MoveBis,ValueBis),(Move,Value)):-
+	Value > ValueBis.	
+	
 
 displayBoard:-
  writeln('*-------------*'),
