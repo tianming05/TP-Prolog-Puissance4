@@ -1,16 +1,16 @@
 :- dynamic board/1.
 
-%Méthodes générales
+%MÃ©thodes gÃ©nÃ©rales
 incr(X, X1) :- X1 is X+1.
 decr(X,X1):- X1 is X-1.
 
-%Renvoie l'index d'une case à partir de la ligne L et de la colonne C.
+%Renvoie l'index d'une case Ã  partir de la ligne L et de la colonne C.
 indexCase(C,L,Index):- Index is C+(5-L)*7.
 
-%Défini si une case X est vide : renvoie true si X est vide
+%DÃ©fini si une case X est vide : renvoie true si X est vide
 caseLibre(X, Board):- nth0(X,Board,Val), var(Val).
 
-%Vérifie si la Colonne est valide:
+%VÃ©rifie si la Colonne est valide:
 %1-  0<Colonne<6
 %2-  La Colonne n'est pas remplie
 possible(Colonne,Board):- Colonne@>=0,Colonne@=<6, indexCase(Colonne,5,Index), caseLibre(Index,Board).
@@ -59,3 +59,13 @@ displayBoard:-
 
  %%%% Start the game!
 init :- length(Board,42), assert(board(Board)), play().
+
+
+
+%Calculate the score of each player
+scoreColunm4([],_,0,[]).
+scoreColunm4([P|L],P,S,[V|Val]):-scoreColunm4(L,P,S1,Val),S is S1+V.
+scoreColunm4([H|L],P,S,[V|Val]):-H\=P,scoreColunm4(L,P,S,Val).
+
+score([],_,0,[]).
+score([H|L],P,S,[V|Val]):-score(L,P,S1,Val),scoreColunm4(H,P,S2,V),S is S1+S2.
