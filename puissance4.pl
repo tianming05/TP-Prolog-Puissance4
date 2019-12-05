@@ -2,6 +2,7 @@
 
 %Methodes generales
 incr(X, X1) :- X1 is X+1.
+clear():-retractall(board(_)).
 
 %Defini si une case X est vide : renvoie true si X est vide
 caseLibre(Colonne,Ligne, Board):- nth0(Colonne,Board,Liste), nth0(Ligne,Liste,Val), var(Val).
@@ -9,28 +10,27 @@ caseLibre(Colonne,Ligne, Board):- nth0(Colonne,Board,Liste), nth0(Ligne,Liste,Va
 %Verifie si le board est rempli
 keepPlaying(N,Board):- caseLibre(N,5,Board).
 keepPlaying(N,Board):-N@=<5,incr(N,N1),keepPlaying(N1,Board).
-keepPlaying(N,Board):-write('Match nul, fin de la partie !').
+keepPlaying(_,_):-write('Match nul, fin de la partie !').
 
-%Vifie si la Colonne est valide:
+%Verifie si la Colonne est valide:
 %1-  0<Colonne<6
 %2-  La Colonne n'est pas remplie
 possible(Colonne,Board):- Colonne@>=0,Colonne@=<6, caseLibre(Colonne,5,Board).
-possible(Colonne,Board):- writeln('Coup invalide, Veuillez rentrer une nouvelle colonne'), play().
+possible(_,_):- writeln('Coup invalide, Veuillez rentrer une nouvelle colonne'), play().
 
 %Trouve a quel endroit placer le pion en fonction de la colonne.
 % retourne l'indice de la premiere case vide de la colonne
 calculPosition(Colonne,LigneActuelle,LigneActuelle,Board):- caseLibre(Colonne,LigneActuelle,Board),!.
 calculPosition(Colonne,LigneActuelle,BonneLigne,Board):- incr(LigneActuelle,LigneSuivante), calculPosition(Colonne,LigneSuivante,BonneLigne,Board).
 
-%Jouer un pion a l'emplacement Move
+%Jouer un pion a l'emplacement Colonne/Ligne
 playMove(Board,Colonne,Ligne,NewBoard,Player) :- nth0(Colonne,Board,Liste), nth0(Ligne,Liste,Player),Board=NewBoard, nth0(Colonne,NewBoard,Liste).
 
 %Actualiser le plateau
 applyIt(Board,NewBoard) :- retract(board(Board)), assert(board(NewBoard)).
 
-play():-board(Board),(win('o',0);not(keepPlaying(0,Board))),displayBoard,!.
-play2():-board(Board),(win('x',0);not(keepPlaying(0,Board))),displayBoard,!.
-
+%Verifie si il faut continuer à jouer : Match Nul ou qqun a gagne
+play():-board(Board),(win('o',0);not(keepPlaying(0,Board))),displayBoard,clear(),!.
 play():-
  board(Board), % instanciate the board from the knowledge base
  displayBoard, % print it
@@ -39,10 +39,9 @@ play():-
  calculPosition(Colonne,0,BonneLigne,Board),
  playMove(Board,Colonne,BonneLigne,NewBoard,'x'),
  applyIt(Board,NewBoard),
- %win('x',0)->!;
- keepPlaying(0,Board),
  play2().
 
+play2():-board(Board),(win('x',0);not(keepPlaying(0,Board))),displayBoard,clear(),!.
 play2():-
  board(Board), % instanciate the board from the knowledge base
  displayBoard, % print it
@@ -51,17 +50,11 @@ play2():-
  calculPosition(Colonne,0,BonneLigne,Board),
  playMove(Board,Colonne,BonneLigne,NewBoard,'o'),
  applyIt(Board,NewBoard),
- keepPlaying(0,Board),
- %win('o',0),
  play().
-
 
 %Retourne la Neme Colonne
 getList(N,L):- board(B), nth0(N,B,L).
 
-%Retourne la Neme ligne (tjrs mettre Index à 0)
-getLigne(N,L,Index):- Index\==7,getList(Index,Colonne),nth0(N,Colonne,Val), updateListe(Val,L,L1),incr(Index,NextIndex) , getLigne(N,L1,NextIndex).
-getLigne(N,L,Index):-write('').
 
 %%%% Print the value of the board at index N:
 % if iths a variable, print  and x or o otherwise.
@@ -179,9 +172,10 @@ caseDiagWin(L):-L=[[_,_,_,_,_,_],[_,_,_,_,_,_],[_,_,_,_,_,_],[_,_,_,_,_,A],[_,_,
 winDiag(L):-caseDiagWin(L),!.
 
 
-win(P,L):- board(B), caseWinH(B,0),write(P),writeln(' win').
-win(P,L):-winV(L),write(P),writeln(' win').
-win(P,L):- board(B),winDiag(B),writeln('D win').
+win(P,L):- board(B), caseWinH(B,L),write('\n \n \n Le joueur'),write(P),writeln(' a gagne (alignement Horizontal)').
+win(P,L):-winV(L),write('\n \n \n  Le joueur '),write(P),writeln(' a gagne (alignement Vertical)').
+win(P,_):- board(B),winDiag(B),write('\n \n \n  Le joueur '),write(P),writeln(' a gagne (alignement Diagonal)').
+
 %win(P,L):-write('').
 %coupGagnant(Joueur,Grille avant,Grille apres)
 % coupGagnant(P,GrilleAvant,GrilleApres):-
