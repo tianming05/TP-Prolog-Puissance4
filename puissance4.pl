@@ -1,4 +1,5 @@
 ﻿﻿:- dynamic board/1.
+﻿:- dynamic currentboard/1.
 
 %Methodes generales
 incr(X, X1) :- X1 is X+1.
@@ -42,6 +43,7 @@ play():-
 
 play2():-
  board(Board),
+ currentboard(CurrentBoard),
  displayBoard,
  copy_term(Board,CurrentBoard),
  choseBestMove(CurrentBoard,Colonne),
@@ -63,8 +65,11 @@ printVal(N,L) :- nth0(N,L,Val), write(Val).
 
 %%%% Implements MinMax Algorithm
 choseBestMove(CurrentBoard,BestColonne):-
-        findGoodColonne([0,1,2,3,4,5,6],Colonnes,CurrentBoard),
+
+	findGoodColonne([0,1,2,3,4,5,6],Colonnes,CurrentBoard),
 	evaluate_and_choose(Colonnes,CurrentBoard,0,-1000,1000,BestCurrentColonne,BestColonne,1).
+
+getCurrentList(N,L):- currentboard(B), nth0(N,B,L).
 
 evaluate_and_choose([Colonne|Colonnes],CurrentBoard,Depth,Alpha,Beta,BestCurrentColonne,BestColonne,Flag) :-
 	colonnePossible(Colonne,CurrentBoard,NewBoard,Flag),
@@ -75,10 +80,10 @@ evaluate_and_choose([Colonne|Colonnes],CurrentBoard,Depth,Alpha,Beta,BestCurrent
 evaluate_and_choose([],CurrentBoard,Depth,Alpha,Beta,Move,Move,Flag).
 
 alpha_beta(0,Position,Alpha,Beta,_,Flag,Value):-
-	/*V = [[3,4,5,5,4,3],[4,6,8,8,6,4],[5,8,11,11,8,5],[7,10,13,13,10,7],[5,8,11,11,8,5],[4,6,8,8,6,4],[3,4,5,5,4,3]],
+	V = [[3,4,5,5,4,3],[4,6,8,8,6,4],[5,8,11,11,8,5],[7,10,13,13,10,7],[5,8,11,11,8,5],[4,6,8,8,6,4],[3,4,5,5,4,3]],
 	player(Flag,P),
-	score(Position,P,C,V),%% We are returning the final value*/
-	Value is 1.
+	score(6,P,C,V),%% We are returning the final value
+	Value is C * Flag.
 
 alpha_beta(D,Position,Alpha,Beta,Move,Flag,Value):-
 	findGoodColonne([0,1,2,3,4,5,6],Moves,Position),
@@ -86,7 +91,7 @@ alpha_beta(D,Position,Alpha,Beta,Move,Flag,Value):-
 	Betal is -Alpha,
     Flagl is -Flag,
 	Dl is D-1,
-	evaluate_and_choose(Moves,Position,Dl,Alphal,Betal,4,Move,Flagl).
+	evaluate_and_choose(Moves,Position,Dl,Alphal,Betal,4,Move,sw).
 
 colonnePossible(Colonne,CurrentBoard,NewBoard,Flag):-
     Flag=(-1),
@@ -94,12 +99,12 @@ colonnePossible(Colonne,CurrentBoard,NewBoard,Flag):-
 	playMove(CurrentBoard,Colonne,BonneLigne,NewBoard,'x').
 
 colonnePossible(Colonne,CurrentBoard,NewBoard,Flag):-
-	Flag=1,
+	Flag=1 ,
     calculPosition(Colonne,0,BonneLigne,CurrentBoard),
 	playMove(CurrentBoard,Colonne,BonneLigne,NewBoard,'o').
 
 player(Flag,'o'):-
-	Flag=1.
+	Flag=1 .
 
 player(Flag,'x'):-
 	Flag=(-1).
@@ -109,7 +114,7 @@ cutoff(Colonne,Value,D,Alpha,Beta,Colonnes,Position,Colonne1,Colonne,Flag):-
 cutoff(Colonne,Value,D,Alpha,Beta,Colonnes,Position,Colonne1,BestColonne,Flag) :-
 	Alpha < Value, Value < Beta,
 	evaluate_and_choose(Colonnes,Position,D,Value,Beta,Colonne,BestColonne,Flag).
-	
+
 cutoff(Colonne, Value,D,Alpha,Beta,Colonnes,Position,Colonne1,BestColonne,Flag):-
 	Value < Alpha,
 	evaluate_and_choose(Colonnes,Position,D,Alpha,Beta,Colonne1,BestColonne,Flag).
@@ -134,15 +139,15 @@ getList(0,L),printVal(4,L),write('|'),getList(1,L1), printVal(4,L1),write('|'),g
 
 
  %%%% Start the game!
-init :- length(Board,7), assert(board(Board)), play().
+init :- length(Board,7), assert(board(Board)),length(CurrentBoard,7), assert(currentboard(CurrentBoard)), play().
 
 % Calculate the score of each player
 scoreColunm4([],_,0,[]).
-scoreColunm4([P|L],P,S,[V|Val]):-scoreColunm4(L,P,S1,Val),S is S1+V.
-scoreColunm4([H|L],P,S,[V|Val]):-H\=P,scoreColunm4(L,P,S,Val).
+scoreColunm4([H|L],P,S,[V|Val]):-H==P,scoreColunm4(L,P,S1,Val),S is S1+V.
+scoreColunm4([H|L],P,S,[V|Val]):-H\==P,scoreColunm4(L,P,S,Val).
 
-score([],_,0,[]).
-score([H|L],P,S,[V|Val]):-score(L,P,S1,Val),scoreColunm4(H,P,S2,V),S is S1+S2.
+score(-1,_,0,[]).
+score(N,P,S,[V|Val]):-getCurrentList(N,L),score(N1,P,S1,Val),scoreColunm4(L,P,S2,V),S is S1+S2,N is N1+1.
 
 %Horizontal
 caseWinTest(L):-L=[P,Q,R,S,_,_,_],P==Q,Q==R,R==S.
