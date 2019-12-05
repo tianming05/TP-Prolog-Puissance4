@@ -15,8 +15,8 @@ keepPlaying(_,_):-write('Match nul, fin de la partie !').
 %Verifie si la Colonne est valide:
 %1-  0<Colonne<6
 %2-  La Colonne n'est pas remplie
-possible(Colonne,Board):- Colonne@>=0,Colonne@=<6, caseLibre(Colonne,5,Board).
-possible(_,_):- writeln('Coup invalide, Veuillez rentrer une nouvelle colonne'), play().
+possible(Colonne,Board,_):- Colonne@>=0,Colonne@=<6, caseLibre(Colonne,5,Board).
+possible(_,_,Player):- writeln('Coup invalide, Veuillez rentrer une nouvelle colonne'), play(Player).
 
 %Trouve a quel endroit placer le pion en fonction de la colonne.
 % retourne l'indice de la premiere case vide de la colonne
@@ -30,27 +30,27 @@ playMove(Board,Colonne,Ligne,NewBoard,Player) :- nth0(Colonne,Board,Liste), nth0
 applyIt(Board,NewBoard) :- retract(board(Board)), assert(board(NewBoard)).
 
 %Verifie si il faut continuer à jouer : Match Nul ou qqun a gagne
-play():-board(Board),(win('o',0);not(keepPlaying(0,Board))),displayBoard,clear(),!.
-play():-
+play(_):-board(Board),(win('o',0);not(keepPlaying(0,Board))),displayBoard,clear(),!.
+play(Player):-
  board(Board), % instanciate the board from the knowledge base
  displayBoard, % print it
  read(Colonne),
- possible(Colonne,Board),
+ possible(Colonne,Board,Player),
  calculPosition(Colonne,0,BonneLigne,Board),
- playMove(Board,Colonne,BonneLigne,NewBoard,'x'),
+ playMove(Board,Colonne,BonneLigne,NewBoard,Player),
  applyIt(Board,NewBoard),
- play2().
+ play2('o').
 
-play2():-board(Board),(win('x',0);not(keepPlaying(0,Board))),displayBoard,clear(),!.
-play2():-
+play2(_):-board(Board),(win('x',0);not(keepPlaying(0,Board))),displayBoard,clear(),!.
+play2(Player):-
  board(Board), % instanciate the board from the knowledge base
  displayBoard, % print it
  read(Colonne),
- possible(Colonne,Board),
+ possible(Colonne,Board,Player),
  calculPosition(Colonne,0,BonneLigne,Board),
- playMove(Board,Colonne,BonneLigne,NewBoard,'o'),
+ playMove(Board,Colonne,BonneLigne,NewBoard,Player),
  applyIt(Board,NewBoard),
- play().
+ play('x').
 
 %Retourne la Neme Colonne
 getList(N,L):- board(B), nth0(N,B,L).
@@ -110,7 +110,7 @@ getList(0,L),printVal(4,L),write('|'),getList(1,L1), printVal(4,L1),write('|'),g
 
 
  %%%% Start the game!
-init :- length(Board,7), assert(board(Board)), play().
+init :- length(Board,7), assert(board(Board)),writeln('-------------------PUISSANCE 4--------------- '),writeln('Le but du jeu est d\'aligner 4 symboles indentiques verticalment,horizontalement ou en diagonale. \nPour jouer, saisissez le numéro de la colonne dans laquelle vous voulez jouer (compris entre 0 et 6) suivi d\'un point. \nExemple :(0. vous permet de jouer dans la 1ère colonne)\n \n \n'),play('x').
 
 % Calculate the score of each player
 scoreColunm4([],_,0,[]).
@@ -172,7 +172,7 @@ caseDiagWin(L):-L=[[_,_,_,_,_,_],[_,_,_,_,_,_],[_,_,_,_,_,_],[_,_,_,_,_,A],[_,_,
 winDiag(L):-caseDiagWin(L),!.
 
 
-win(P,L):- board(B), caseWinH(B,L),write('\n \n \n Le joueur'),write(P),writeln(' a gagne (alignement Horizontal)').
+win(P,L):- board(B), caseWinH(B,L),write('\n \n \n Le joueur '),write(P),writeln(' a gagne (alignement Horizontal)').
 win(P,L):-winV(L),write('\n \n \n  Le joueur '),write(P),writeln(' a gagne (alignement Vertical)').
 win(P,_):- board(B),winDiag(B),write('\n \n \n  Le joueur '),write(P),writeln(' a gagne (alignement Diagonal)').
 
