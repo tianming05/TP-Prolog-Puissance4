@@ -1,5 +1,4 @@
 ﻿﻿:- dynamic board/1.
-﻿:- dynamic currentboard/1.
 
 %Methodes generales
 incr(X, X1) :- X1 is X+1.
@@ -43,7 +42,6 @@ play():-
 
 play2():-
  board(Board),
- currentboard(CurrentBoard),
  displayBoard,
  copy_term(Board,CurrentBoard),
  choseBestMove(CurrentBoard,Colonne),
@@ -68,8 +66,6 @@ choseBestMove(CurrentBoard,BestColonne):-
 
 	findGoodColonne([0,1,2,3,4,5,6],Colonnes,CurrentBoard),
 	evaluate_and_choose(Colonnes,CurrentBoard,0,-1000,1000,BestCurrentColonne,BestColonne,1).
-
-getCurrentList(N,L):- currentboard(B), nth0(N,B,L).
 
 evaluate_and_choose([Colonne|Colonnes],CurrentBoard,Depth,Alpha,Beta,BestCurrentColonne,BestColonne,Flag) :-
 	colonnePossible(Colonne,CurrentBoard,NewBoard,Flag),
@@ -139,7 +135,7 @@ getList(0,L),printVal(4,L),write('|'),getList(1,L1), printVal(4,L1),write('|'),g
 
 
  %%%% Start the game!
-init :- length(Board,7), assert(board(Board)),length(CurrentBoard,7), assert(currentboard(CurrentBoard)), play().
+init :- length(Board,7), assert(board(Board)), play().
 
 % Calculate the score of each player
 scoreColunm4([],_,0,[]).
@@ -147,7 +143,7 @@ scoreColunm4([H|L],P,S,[V|Val]):-H==P,scoreColunm4(L,P,S1,Val),S is S1+V.
 scoreColunm4([H|L],P,S,[V|Val]):-H\==P,scoreColunm4(L,P,S,Val).
 
 score(-1,_,0,[]).
-score(N,P,S,[V|Val]):-getCurrentList(N,L),score(N1,P,S1,Val),scoreColunm4(L,P,S2,V),S is S1+S2,N is N1+1.
+score(N,P,S,[V|Val]):-getList(N,L),score(N1,P,S1,Val),scoreColunm4(L,P,S2,V),S is S1+S2,N is N1+1.
 
 %Horizontal
 caseWinTest(L):-L=[P,Q,R,S,_,_,_],P==Q,Q==R,R==S.
