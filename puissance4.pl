@@ -2,9 +2,6 @@
 
 %Methodes generales
 incr(X, X1) :- X1 is X+1.
-%ajoute X a la fin de la liste L
-updateListe(X,L,L1):-L1=[L|X].
-decr(X,X1):- X1 is X-1.
 
 %Dini si une case X est vide : renvoie true si X est vide
 caseLibre(Colonne,Ligne, Board):- nth0(Colonne,Board,Liste), nth0(Ligne,Liste,Val), var(Val).
@@ -146,34 +143,13 @@ score([],_,0,[]).
 score([H|L],P,S,[V|Val]):-score(L,P,S1,Val),scoreColunm4(H,P,S2,V),S is S1+S2.
 
 %Horizontal
-
-
-%Si c'est au début
-% caseWinTest(Board):- Board=[[P|_],[Q|_],[R|_],[S|_],_,_,_],P==Q,Q==R,R==S.
-%caseWinH(Board):-
-% Board=[_,[P|_],[Q|_],[R|_],[S|_],_,_],P==Q,Q==R,R==S. caseWinH(Board):-
-% Board=[_,_,[P|_],[Q|_],[R|_],[S|_],_],P==Q,Q==R,R==S. caseWinH(Board):-
-% Board=[_,_,_,[P|_],[Q|_],[R|_],[S|_]],P==Q,Q==R,R==S.
-%
-
 caseWinTest(L):-L=[P,Q,R,S,_,_,_],P==Q,Q==R,R==S.
 caseWinTest(L):-L=[_,P,Q,R,S,_,_],P==Q,Q==R,R==S.
 caseWinTest(L):-L=[_,_,P,Q,R,S,_],P==Q,Q==R,R==S.
 caseWinTest(L):-L=[_,_,_,P,Q,R,S],P==Q,Q==R,R==S.
-%caseWinH(N):-getLigne(N,L,0), caseWinTest(L),!.
-%caseWinH(N):-incr(N,N1),N1@=<5,caseWinH(N1).
 
 caseWinH([[X|_],[Y|_],[W|_],[Z|_],[U|_],[V|_],[T|_]],N):-caseWinTest([X,Y,W,Z,U,V,T]),!.
 caseWinH([[_|A],[_|B],[_|C],[_|D],[_|E],[_|F],[_|G]],N):-incr(N,N1),N1@=<5,caseWinH([A,B,C,D,E,F,G],N1).
-
-
-% caseWinH([[X|A],[Y|B],[W|C],[Z|D],E,F,G],Index):-Index@=<5,caseWinTest1([X,Y,W,Z,_,_,_]),incr(Index,Index1),caseWinH([A,B,C,D,E,F,G],Index1).
- %caseWinH([A,[X|B],[Y|C],[W|D],[Z|E],F,G],Index):-Index@=<5,caseWinTest2([X,Y,W,Z,_,_,_]),incr(Index,Index1),caseWinH([A,B,C,D,E,F,G],Index1).
- %caseWinH([A,B,[X|C],[Y|D],[W|E],[Z|F],G]):-(X\==Y;Y\==W;W\==Z),caseWinH([A,B,C,D,E,F,G]).
-% caseWinH([A,B,C,[X|D],[Y|E],[W|F],[Z|G]]):-(X\==Y;Y\==W;W\==Z),caseWinH([A,B,C,D,E,F,G]).
-%
-
-
 
 
 %%%% Print the value of the board at index N:
