@@ -67,52 +67,54 @@ printVal(N,L) :- nth0(N,L,Val), write(Val).
 %%%% Implements MinMax Algorithm
 choseBestMove(CurrentBoard,BestColonne):-
         findGoodColonne([0,1,2,3,4,5,6],Colonnes,CurrentBoard),
-	evaluate_and_choose(Colonnes,CurrentBoard,1,-1000,1000,BestCurrentColonne,BestColonne,1).
+	evaluate_and_choose(Colonnes,CurrentBoard,0,-1000,1000,BestCurrentColonne,BestColonne,1).
 
 evaluate_and_choose([Colonne|Colonnes],CurrentBoard,Depth,Alpha,Beta,BestCurrentColonne,BestColonne,Flag) :-
 	colonnePossible(Colonne,CurrentBoard,NewBoard,Flag),
-	alpha_beta(Depth,NewBoard,Alpha,Beta,Colonne,Value,Flag),
-	Value1 is -Value,
-	cutoff(Colonne,Value1,D,Alpha,Beta,Colonnes,CurrentBoard,BestCurrentColonne,BestColonne,Flag).
+	alpha_beta(Depth,NewBoard,Alpha,Beta,Colonne,Flag,Value),
+	Valuel is -Value,
+	cutoff(Colonne,Valuel,D,Alpha,Beta,Colonnes,CurrentBoard,BestCurrentColonne,BestColonne,Flag).
 
-evaluate_and_choose([],CurrentBoard,Depth,Alpha,Beta,Move,(Move,Alpha),Flag).
+evaluate_and_choose([],CurrentBoard,Depth,Alpha,Beta,Move,Move,Flag).
 
 alpha_beta(0,Position,Alpha,Beta,_,Flag,Value):-
-	V = [[3,4,5,5,4,3],[4,6,8,8,6,4],[5,8,11,11,8,5],[7,10,13,13,10,7],[5,8,11,11,8,5],[4,6,8,8,6,4],[3,4,5,5,4,3]],
+	/*V = [[3,4,5,5,4,3],[4,6,8,8,6,4],[5,8,11,11,8,5],[7,10,13,13,10,7],[5,8,11,11,8,5],[4,6,8,8,6,4],[3,4,5,5,4,3]],
 	player(Flag,P),
-	score(Position,P,C,V),%% We are returning the final value
-	Value is C*Flag.
+	score(Position,P,C,V),%% We are returning the final value*/
+	Value is 1.
 
 alpha_beta(D,Position,Alpha,Beta,Move,Flag,Value):-
 	findGoodColonne([0,1,2,3,4,5,6],Moves,Position),
 	Alphal is -Beta,
 	Betal is -Alpha,
     Flagl is -Flag,
-	D1 is D-1,
-	evaluate_and_choose(Moves,Position,D1,Alpha1,Beta1,nil,(Move,Value),Flagl).
+	Dl is D-1,
+	evaluate_and_choose(Moves,Position,Dl,Alphal,Betal,4,Move,Flagl).
 
 colonnePossible(Colonne,CurrentBoard,NewBoard,Flag):-
-        Flag=(-1),
+    Flag=(-1),
 	calculPosition(Colonne,0,BonneLigne,CurrentBoard),
 	playMove(CurrentBoard,Colonne,BonneLigne,NewBoard,'x').
 
 colonnePossible(Colonne,CurrentBoard,NewBoard,Flag):-
-        calculPosition(Colonne,0,BonneLigne,CurrentBoard),
+	Flag=1,
+    calculPosition(Colonne,0,BonneLigne,CurrentBoard),
 	playMove(CurrentBoard,Colonne,BonneLigne,NewBoard,'o').
 
 player(Flag,'o'):-
-	Flag==1.
+	Flag=1.
 
 player(Flag,'x'):-
-	Flag==(-1).
+	Flag=(-1).
 
-cutoff(Colonne,Value,D,Alpha,Beta,Colonnes,Position,Colonne1,(Colonne,Value),Flag):-
+cutoff(Colonne,Value,D,Alpha,Beta,Colonnes,Position,Colonne1,Colonne,Flag):-
 	Value > Beta.
 cutoff(Colonne,Value,D,Alpha,Beta,Colonnes,Position,Colonne1,BestColonne,Flag) :-
 	Alpha < Value, Value < Beta,
 	evaluate_and_choose(Colonnes,Position,D,Value,Beta,Colonne,BestColonne,Flag).
+	
 cutoff(Colonne, Value,D,Alpha,Beta,Colonnes,Position,Colonne1,BestColonne,Flag):-
-	Value <Alpha,
+	Value < Alpha,
 	evaluate_and_choose(Colonnes,Position,D,Alpha,Beta,Colonne1,BestColonne,Flag).
 
 
