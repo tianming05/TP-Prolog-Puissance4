@@ -1,22 +1,21 @@
-﻿﻿:- dynamic board/1.
+:- dynamic board/1.
 
 %Methodes generales
 incr(X, X1) :- X1 is X+1.
 
-%Dini si une case X est vide : renvoie true si X est vide
+%Defini si une case X est vide : renvoie true si X est vide
 caseLibre(Colonne,Ligne, Board):- nth0(Colonne,Board,Liste), nth0(Ligne,Liste,Val), var(Val).
+
+%Verifie si le board est rempli
+keepPlaying(N,Board):- caseLibre(N,5,Board).
+keepPlaying(N,Board):-N@=<5,incr(N,N1),keepPlaying(N1,Board).
+keepPlaying(N,Board):-write('Match nul, fin de la partie !').
 
 %Vifie si la Colonne est valide:
 %1-  0<Colonne<6
 %2-  La Colonne n'est pas remplie
 possible(Colonne,Board):- Colonne@>=0,Colonne@=<6, caseLibre(Colonne,5,Board).
 possible(Colonne,Board):- writeln('Coup invalide, Veuillez rentrer une nouvelle colonne'), play().
-
-findGoodColonne([],[],_).
-
-findGoodColonne([H|Q],[H|A],Board):-
- caseLibre(H,5,Board),
- findGoodColonne(Q,A,Board).
 
 %Trouve a quel endroit placer le pion en fonction de la colonne.
 % retourne l'indice de la premiere case vide de la colonne
@@ -29,6 +28,9 @@ playMove(Board,Colonne,Ligne,NewBoard,Player) :- nth0(Colonne,Board,Liste), nth0
 %Actualiser le plateau
 applyIt(Board,NewBoard) :- retract(board(Board)), assert(board(NewBoard)).
 
+play():-board(Board),(win('o',0);not(keepPlaying(0,Board))),displayBoard,!.
+play2():-board(Board),(win('x',0);not(keepPlaying(0,Board))),displayBoard,!.
+
 play():-
  board(Board), % instanciate the board from the knowledge base
  displayBoard, % print it
@@ -37,24 +39,29 @@ play():-
  calculPosition(Colonne,0,BonneLigne,Board),
  playMove(Board,Colonne,BonneLigne,NewBoard,'x'),
  applyIt(Board,NewBoard),
- win('x',0),
+ %win('x',0)->!;
+ keepPlaying(0,Board),
  play2().
 
 play2():-
- board(Board),
- displayBoard,
- copy_term(Board,CurrentBoard),
- choseBestMove(CurrentBoard,Colonne),
+ board(Board), % instanciate the board from the knowledge base
+ displayBoard, % print it
+ read(Colonne),
+ possible(Colonne,Board),
  calculPosition(Colonne,0,BonneLigne,Board),
  playMove(Board,Colonne,BonneLigne,NewBoard,'o'),
  applyIt(Board,NewBoard),
- win('o',0),
+ keepPlaying(0,Board),
+ %win('o',0),
  play().
 
 
 %Retourne la Neme Colonne
 getList(N,L):- board(B), nth0(N,B,L).
 
+%Retourne la Neme ligne (tjrs mettre Index à 0)
+getLigne(N,L,Index):- Index\==7,getList(Index,Colonne),nth0(N,Colonne,Val), updateListe(Val,L,L1),incr(Index,NextIndex) , getLigne(N,L1,NextIndex).
+getLigne(N,L,Index):-write('').
 
 %%%% Print the value of the board at index N:
 % if iths a variable, print  and x or o otherwise.
@@ -62,57 +69,33 @@ printVal(N,L) :-  nth0(N,L,Val), var(Val), write(' '), !.
 printVal(N,L) :- nth0(N,L,Val), write(Val).
 
 %%%% Implements MinMax Algorithm
-choseBestMove(CurrentBoard,BestColonne):-
-        findGoodColonne([0,1,2,3,4,5,6],Colonnes,CurrentBoard),
-	evaluate_and_choose(Colonnes,CurrentBoard,0,-1000,1000,BestCurrentColonne,BestColonne,1).
 
-evaluate_and_choose([Colonne|Colonnes],CurrentBoard,Depth,Alpha,Beta,BestCurrentColonne,BestColonne,Flag) :-
-	colonnePossible(Colonne,CurrentBoard,NewBoard,Flag),
-	alpha_beta(Depth,NewBoard,Alpha,Beta,Colonne,Flag,Value),
-	Valuel is -Value,
-	cutoff(Colonne,Valuel,D,Alpha,Beta,Colonnes,CurrentBoard,BestCurrentColonne,BestColonne,Flag).
+choseBestMove(CurrentConfig,Computer,Move):-
+	set_of(M,possible(M,CurrentConfig),Moves),
+	chooseMove(Moves,CurrentBoard,1,1,(nil,-1000),(Move,Value)).
 
-evaluate_and_choose([],CurrentBoard,Depth,Alpha,Beta,Move,Move,Flag).
+chooseMove([Move|Moves],CurrentBoard,Depth,Flag,Record,Best):-
+	movePossible(Move,CurrentBoard,NewBoard),
+	minmax(Depth,NewBoard,Flag,Move,Value),
+	update(Move,Value,Record,Record1),
+	chooseMove(Moves,CurrentBoard,Depth,Flag,Record1,Best).
+chooseMove([],CurrentBoard,Depth,Flag,Record,Record).
 
-alpha_beta(0,Position,Alpha,Beta,_,Flag,Value):-
-	/*V = [[3,4,5,5,4,3],[4,6,8,8,6,4],[5,8,11,11,8,5],[7,10,13,13,10,7],[5,8,11,11,8,5],[4,6,8,8,6,4],[3,4,5,5,4,3]],
-	player(Flag,P),
-	score(Position,P,C,V),%% We are returning the final value*/
-	Value is 1.
+minmax(0,CurrentBoard,Flag,Move,Value):-
+	value(CurrentBoard,C),%% We are returning the final value
+	Value:=C * Flag.
 
-alpha_beta(D,Position,Alpha,Beta,Move,Flag,Value):-
-	findGoodColonne([0,1,2,3,4,5,6],Moves,Position),
-	Alphal is -Beta,
-	Betal is -Alpha,
-    Flagl is -Flag,
-	Dl is D-1,
-	evaluate_and_choose(Moves,Position,Dl,Alphal,Betal,4,Move,Flagl).
+minmax(Depth,CurrentBoard,Flag,Move,Value):-
+	set_of(M,possible(M,CurrentConfig),Moves),
+	FlagBis:= -Flag,
+	DepthBis:= Depth-1,
+	chooseMove(Moves,CurrentBoard,DepthBis,FlagBis,(nil,-1000),(Move,Value)).
 
-colonnePossible(Colonne,CurrentBoard,NewBoard,Flag):-
-    Flag=(-1),
-	calculPosition(Colonne,0,BonneLigne,CurrentBoard),
-	playMove(CurrentBoard,Colonne,BonneLigne,NewBoard,'x').
+update(Move,Value,(MoveBis,ValueBis),(MoveBis,ValueBis)):-
+	Value =< ValueBis.
 
-colonnePossible(Colonne,CurrentBoard,NewBoard,Flag):-
-	Flag=1,
-    calculPosition(Colonne,0,BonneLigne,CurrentBoard),
-	playMove(CurrentBoard,Colonne,BonneLigne,NewBoard,'o').
-
-player(Flag,'o'):-
-	Flag=1.
-
-player(Flag,'x'):-
-	Flag=(-1).
-
-cutoff(Colonne,Value,D,Alpha,Beta,Colonnes,Position,Colonne1,Colonne,Flag):-
-	Value > Beta.
-cutoff(Colonne,Value,D,Alpha,Beta,Colonnes,Position,Colonne1,BestColonne,Flag) :-
-	Alpha < Value, Value < Beta,
-	evaluate_and_choose(Colonnes,Position,D,Value,Beta,Colonne,BestColonne,Flag).
-	
-cutoff(Colonne, Value,D,Alpha,Beta,Colonnes,Position,Colonne1,BestColonne,Flag):-
-	Value < Alpha,
-	evaluate_and_choose(Colonnes,Position,D,Alpha,Beta,Colonne1,BestColonne,Flag).
+update(Move,Value,(MoveBis,ValueBis),(Move,Value)):-
+	Value > ValueBis.
 
 
 displayBoard:-
@@ -138,11 +121,11 @@ init :- length(Board,7), assert(board(Board)), play().
 
 % Calculate the score of each player
 scoreColunm4([],_,0,[]).
-scoreColunm4([P|L],P,S,[V|Val]):-scoreColunm4(L,P,S1,Val),S is S1+V.
-scoreColunm4([H|L],P,S,[V|Val]):-H\=P,scoreColunm4(L,P,S,Val).
+scoreColunm4([H|L],P,S,[V|Val]):-H==P,scoreColunm4(L,P,S1,Val),S is S1+V.
+scoreColunm4([H|L],P,S,[V|Val]):-H\==P,scoreColunm4(L,P,S,Val).
 
-score([],_,0,[]).
-score([H|L],P,S,[V|Val]):-score(L,P,S1,Val),scoreColunm4(H,P,S2,V),S is S1+S2.
+score(-1,_,0,[]).
+score(N,P,S,[V|Val]):-getList(N,L),score(N1,P,S1,Val),scoreColunm4(L,P,S2,V),S is S1+S2,N is N1+1.
 
 %Horizontal
 caseWinTest(L):-L=[P,Q,R,S,_,_,_],P==Q,Q==R,R==S.
@@ -153,11 +136,6 @@ caseWinTest(L):-L=[_,_,_,P,Q,R,S],P==Q,Q==R,R==S.
 caseWinH([[X|_],[Y|_],[W|_],[Z|_],[U|_],[V|_],[T|_]],N):-caseWinTest([X,Y,W,Z,U,V,T]),!.
 caseWinH([[_|A],[_|B],[_|C],[_|D],[_|E],[_|F],[_|G]],N):-incr(N,N1),N1@=<5,caseWinH([A,B,C,D,E,F,G],N1).
 
-
-%%%% Print the value of the board at index N:
-% if its a variable, print ? and x or o otherwise.
-printVal(N) :- board(B), nth0(N,B,Val), var(Val), write('?'), !.
-printVal(N) :- board(B), nth0(N,B,Val), write(Val).
 
 %Vertical Winning configuration
 caseWinV(L):-L=[P,Q,R,S,_,_],P==Q,Q==R,R==S.
@@ -204,7 +182,7 @@ winDiag(L):-caseDiagWin(L),!.
 win(P,L):- board(B), caseWinH(B,0),write(P),writeln(' win').
 win(P,L):-winV(L),write(P),writeln(' win').
 win(P,L):- board(B),winDiag(B),writeln('D win').
-win(P,L):-write('').
+%win(P,L):-write('').
 %coupGagnant(Joueur,Grille avant,Grille apres)
 % coupGagnant(P,GrilleAvant,GrilleApres):-
 % jouerUnCoup(GrilleAvant,GrilleApres,P,),win(P,GrilleApres).
