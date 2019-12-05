@@ -44,10 +44,10 @@ play():-
  play2().
 
 play2():-
- board(Board), % instanciate the board from the knowledge base
- displayBoard, % print it
- read(Colonne),
- possible(Colonne,Board),
+ board(Board),
+ displayBoard,
+ copy_term(Board,CurrentBoard),
+ choseBestMove(CurrentBoard,Colonne),
  calculPosition(Colonne,0,BonneLigne,Board),
  playMove(Board,Colonne,BonneLigne,NewBoard,'o'),
  applyIt(Board,NewBoard),
