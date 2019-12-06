@@ -1,4 +1,4 @@
-﻿﻿:- dynamic board/1.
+﻿:- dynamic board/1.
 
 %Methodes generales
 incr(X, X1) :- X1 is X+1.
@@ -69,13 +69,13 @@ choseBestMove(CurrentBoard,BestColonne):-
 
 evaluate_and_choose([Colonne|Colonnes],CurrentBoard,Depth,Alpha,Beta,BestCurrentColonne,BestColonne,Flag) :-
 	colonnePossible(Colonne,CurrentBoard,NewBoard,Flag),
+        Flagl is -Flag,
 	alpha_beta(Depth,NewBoard,Alpha,Beta,Colonne,Flag,Value),
 	Valuel is -Value,
 	cutoff(Colonne,Valuel,D,Alpha,Beta,Colonnes,CurrentBoard,BestCurrentColonne,BestColonne,Flag).
+evaluate_and_choose([],_CurrentBoard,_Depth,_Alpha,_Beta,Move,Move,_Flag).
 
-evaluate_and_choose([],CurrentBoard,Depth,Alpha,Beta,Move,Move,Flag).
-
-alpha_beta(0,Position,Alpha,Beta,_,Flag,Value):-
+alpha_beta(0,Position,_Alpha,_Beta,_,Flag,Value):-
 	V = [[3,4,5,5,4,3],[4,6,8,8,6,4],[5,8,11,11,8,5],[7,10,13,13,10,7],[5,8,11,11,8,5],[4,6,8,8,6,4],[3,4,5,5,4,3]],
 	player(Flag,P),
 	score(6,P,C,V),%% We are returning the final value
@@ -85,9 +85,8 @@ alpha_beta(D,Position,Alpha,Beta,Move,Flag,Value):-
 	findGoodColonne([0,1,2,3,4,5,6],Moves,Position),
 	Alphal is -Beta,
 	Betal is -Alpha,
-    Flagl is -Flag,
 	Dl is D-1,
-	evaluate_and_choose(Moves,Position,Dl,Alphal,Betal,4,Move,sw).
+	evaluate_and_choose(Moves,Position,Dl,Alphal,Betal,4,Move,Flag).
 
 colonnePossible(Colonne,CurrentBoard,NewBoard,Flag):-
     Flag=(-1),
@@ -105,14 +104,14 @@ player(Flag,'o'):-
 player(Flag,'x'):-
 	Flag=(-1).
 
-cutoff(Colonne,Value,D,Alpha,Beta,Colonnes,Position,Colonne1,Colonne,Flag):-
-	Value > Beta.
-cutoff(Colonne,Value,D,Alpha,Beta,Colonnes,Position,Colonne1,BestColonne,Flag) :-
+cutoff(Colonne,Value,_D,_Alpha,Beta,_Colonnes,_Position,_Colonne1,Colonne,_Flag):-
+	Value >= Beta,!.
+cutoff(Colonne,Value,D,Alpha,Beta,Colonnes,Position,_Colonne1,BestColonne,Flag) :-
 	Alpha < Value, Value < Beta,
 	evaluate_and_choose(Colonnes,Position,D,Value,Beta,Colonne,BestColonne,Flag).
 
-cutoff(Colonne, Value,D,Alpha,Beta,Colonnes,Position,Colonne1,BestColonne,Flag):-
-	Value < Alpha,
+cutoff(_Colonne, Value,D,Alpha,Beta,Colonnes,Position,Colonne1,BestColonne,Flag):-
+	Value =< Alpha,!,
 	evaluate_and_choose(Colonnes,Position,D,Alpha,Beta,Colonne1,BestColonne,Flag).
 
 
@@ -209,3 +208,4 @@ win(P,L):-write('').
 %coupGagnant(Joueur,Grille avant,Grille apres)
 % coupGagnant(P,GrilleAvant,GrilleApres):-
 % jouerUnCoup(GrilleAvant,GrilleApres,P,),win(P,GrilleApres).
+
