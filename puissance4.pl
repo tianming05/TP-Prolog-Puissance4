@@ -2,15 +2,20 @@
 
 %Methodes generales
 incr(X, X1) :- X1 is X+1.
+clear():-retractall(board(_)).
 
 %Dini si une case X est vide : renvoie true si X est vide
 caseLibre(Colonne,Ligne, Board):- nth0(Colonne,Board,Liste), nth0(Ligne,Liste,Val), var(Val).
+%Verifie si le board est rempli
+keepPlaying(N,Board):- caseLibre(N,5,Board).
+keepPlaying(N,Board):-N@=<5,incr(N,N1),keepPlaying(N1,Board).
+keepPlaying(_,_):-write('Match nul, fin de la partie !').
 
-%Vifie si la Colonne est valide:
+%Verifie si la Colonne est valide:
 %1-  0<Colonne<6
 %2-  La Colonne n'est pas remplie
-possible(Colonne,Board):- Colonne@>=0,Colonne@=<6, caseLibre(Colonne,5,Board).
-possible(Colonne,Board):- writeln('Coup invalide, Veuillez rentrer une nouvelle colonne'), play().
+possible(Colonne,Board,_):- Colonne@>=0,Colonne@=<6, caseLibre(Colonne,5,Board).
+possible(_,_,Player):- writeln('Coup invalide, Veuillez rentrer une nouvelle colonne'), play(Player).
 
 findGoodColonne([],[],_).
 
@@ -30,27 +35,27 @@ playMove(Board,Colonne,Ligne,NewBoard,Player) :- nth0(Colonne,Board,Liste), nth0
 %Actualiser le plateau
 applyIt(Board,NewBoard) :- retract(board(Board)), assert(board(NewBoard)).
 
-play():-
+play(_):-board(Board),(win('o',0,Board);not(keepPlaying(0,Board))),displayBoard,clear(),!.
+play(Player):-
  board(Board), % instanciate the board from the knowledge base
  displayBoard, % print it
  read(Colonne),
- possible(Colonne,Board),
+ possible(Colonne,Board,Player),
  calculPosition(Colonne,0,BonneLigne,Board),
- playMove(Board,Colonne,BonneLigne,NewBoard,'x'),
+ playMove(Board,Colonne,BonneLigne,NewBoard,Player),
  applyIt(Board,NewBoard),
- win('x',0),
- play2().
+ play2('o').
 
-play2():-
+play2(_):-board(Board),(win('x',0,Board);not(keepPlaying(0,Board))),displayBoard,clear(),!.
+play2(Player):-
  board(Board),
  displayBoard,
  copy_term(Board,CurrentBoard),
  choseBestMove(CurrentBoard,Colonne),
  calculPosition(Colonne,0,BonneLigne,Board),
- playMove(Board,Colonne,BonneLigne,NewBoard,'o'),
+ playMove(Board,Colonne,BonneLigne,NewBoard,Player),
  applyIt(Board,NewBoard),
- win('o',0),
- play().
+ play('x').
 
 
 %Retourne la Neme Colonne
@@ -68,7 +73,16 @@ printVal(N,L) :- nth0(N,L,Val), write(Val).
 choseBestMove(CurrentBoard,BestColonne):-
 
 	findGoodColonne([0,1,2,3,4,5,6],Colonnes,CurrentBoard),
-	evaluate_and_choose(Colonnes,CurrentBoard,0,-1000,1000,BestCurrentColonne,BestColonne,1).
+        (  coupGagnantPossible(Colonnes,CurrentBoard,BestColonne);
+            coupPerdant(Colonnes,CurrentBoard,BestColonne);
+	evaluate_and_choose(Colonnes,CurrentBoard,0,-1000,1000,BestCurrentColonne,BestColonne,1)).
+
+coupPerdant([Colonne|_],CurrentBoard,BestColonne):- colonnePossible(Colonne,CurrentBoard,NewBoard,-1), coupGagnant(0,NewBoard), BestColonne is Colonne.
+coupPerdant([_|Colonnes],CurrentBoard,BestColonne) :- coupPerdant(Colonnes,CurrentBoard,BestColonne).
+
+coupGagnantPossible([Colonne|_],CurrentBoard,BestColonne):- colonnePossible(Colonne,CurrentBoard,NewBoard,1), coupGagnant(0,NewBoard), BestColonne is Colonne.
+coupGagnantPossible([_|Colonnes],CurrentBoard,BestColonne) :- coupGagnantPossible(Colonnes,CurrentBoard,BestColonne).
+
 
 evaluate_and_choose([Colonne|Colonnes],CurrentBoard,Depth,Alpha,Beta,BestCurrentColonne,BestColonne,Flag) :-
 	colonnePossible(Colonne,CurrentBoard,NewBoard,Flag),
@@ -138,7 +152,8 @@ getList(0,L),printVal(4,L),write('|'),getList(1,L1), printVal(4,L1),write('|'),g
 
 
  %%%% Start the game!
-init :- length(Board,7), assert(board(Board)), play().
+init :- length(Board,7), assert(board(Board)),writeln('-------------------PUISSANCE 4--------------- '),writeln('Le but du jeu est d\'aligner 4 symboles indentiques verticalment,horizontalement ou en diagonale. \nPour jouer, saisissez le numéro de la colonne dans laquelle vous voulez jouer (compris entre 0 et 6) suivi d\'un point. \nExemple :(0. vous permet de jouer dans la 1ère colonne)\n \n \n'),play('x').
+
 
 % Calculate the score of player P
 scoreColunm4([],_,0,[]).
@@ -157,19 +172,13 @@ caseWinTest(L):-L=[_,_,_,P,Q,R,S],P==Q,Q==R,R==S.
 caseWinH([[X|_],[Y|_],[W|_],[Z|_],[U|_],[V|_],[T|_]],N):-caseWinTest([X,Y,W,Z,U,V,T]),!.
 caseWinH([[_|A],[_|B],[_|C],[_|D],[_|E],[_|F],[_|G]],N):-incr(N,N1),N1@=<5,caseWinH([A,B,C,D,E,F,G],N1).
 
-
-%%%% Print the value of the board at index N:
-% if its a variable, print ? and x or o otherwise.
-printVal(N) :- board(B), nth0(N,B,Val), var(Val), write('?'), !.
-printVal(N) :- board(B), nth0(N,B,Val), write(Val).
-
 %Vertical Winning configuration
 caseWinV(L):-L=[P,Q,R,S,_,_],P==Q,Q==R,R==S.
 caseWinV(L):-L=[_,_,P,Q,R,S],P==Q,Q==R,R==S.
 caseWinV(L):-L=[_,P,Q,R,S,_],P==Q,Q==R,R==S.
 
-winV(N):-getList(N,L),caseWinV(L),!.
-winV(N):-incr(N,N1),N1@=<6,winV(N1).
+winV(N,B):-getList(N,L,B),caseWinV(L),!.
+winV(N,B):-incr(N,N1),N1@=<6,winV(N1,B).
 
 %Diag
 caseDiagWin(L):-L=[[A|_],[_,B|_],[_,_,C|_],[_,_,_,D|_],_,_,_],A==B,B==C,C==D.
@@ -205,10 +214,13 @@ caseDiagWin(L):-L=[[_,_,_,_,_,_],[_,_,_,_,_,_],[_,_,_,_,_,_],[_,_,_,_,_,A],[_,_,
 winDiag(L):-caseDiagWin(L),!.
 
 
-win(P,L):- board(B), caseWinH(B,0),write(P),writeln(' win').
-win(P,L):-winV(L),write(P),writeln(' win').
-win(P,L):- board(B),winDiag(B),writeln('D win').
-win(P,L):-write('').
+win(P,L,B):- caseWinH(B,L),write('\n \n \n Le joueur '),write(P),writeln(' a gagne (alignement Horizontal)').
+win(P,L,B):-winV(L,B),write('\n \n \n  Le joueur '),write(P),writeln(' a gagne (alignement Vertical)').
+win(P,_,B):- winDiag(B),write('\n \n \n  Le joueur '),write(P),writeln(' a gagne (alignement Diagonal)').
+
+coupGagnant(_,B):- caseWinH(B,0).
+coupGagnant(L,B):-winV(L,B).
+coupGagnant(_,B):- winDiag(B).
 %coupGagnant(Joueur,Grille avant,Grille apres)
 % coupGagnant(P,GrilleAvant,GrilleApres):-
 % jouerUnCoup(GrilleAvant,GrilleApres,P,),win(P,GrilleApres).
