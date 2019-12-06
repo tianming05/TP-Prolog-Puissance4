@@ -1,4 +1,4 @@
-﻿:- dynamic board/1.
+﻿﻿:- dynamic board/1.
 
 %Methodes generales
 incr(X, X1) :- X1 is X+1.
@@ -17,6 +17,7 @@ findGoodColonne([],[],_).
 findGoodColonne([H|Q],[H|A],Board):-
  caseLibre(H,5,Board),
  findGoodColonne(Q,A,Board).
+findGoodColonne([_|Q],T,Board):-findGoodColonne(Q,T,Board).
 
 %Trouve a quel endroit placer le pion en fonction de la colonne.
 % retourne l'indice de la premiere case vide de la colonne
@@ -55,6 +56,8 @@ play2():-
 %Retourne la Neme Colonne
 getList(N,L):- board(B), nth0(N,B,L).
 
+getList(N,L,Board):-nth0(N,Board,L).
+
 
 %%%% Print the value of the board at index N:
 % if iths a variable, print  and x or o otherwise.
@@ -72,13 +75,14 @@ evaluate_and_choose([Colonne|Colonnes],CurrentBoard,Depth,Alpha,Beta,BestCurrent
         Flagl is -Flag,
 	alpha_beta(Depth,NewBoard,Alpha,Beta,Colonne,Flag,Value),
 	Valuel is -Value,
-	cutoff(Colonne,Valuel,D,Alpha,Beta,Colonnes,CurrentBoard,BestCurrentColonne,BestColonne,Flag).
+        board(Board),
+	cutoff(Colonne,Value,D,Alpha,Beta,Colonnes,Board,BestCurrentColonne,BestColonne,Flag).
 evaluate_and_choose([],_CurrentBoard,_Depth,_Alpha,_Beta,Move,Move,_Flag).
 
 alpha_beta(0,Position,_Alpha,_Beta,_,Flag,Value):-
 	V = [[3,4,5,5,4,3],[4,6,8,8,6,4],[5,8,11,11,8,5],[7,10,13,13,10,7],[5,8,11,11,8,5],[4,6,8,8,6,4],[3,4,5,5,4,3]],
 	player(Flag,P),
-	score(6,P,C,V),%% We are returning the final value
+	score(6,P,C,V,Position),%% We are returning the final value
 	Value is C * Flag.
 
 alpha_beta(D,Position,Alpha,Beta,Move,Flag,Value):-
@@ -107,7 +111,7 @@ player(Flag,'x'):-
 cutoff(Colonne,Value,_D,_Alpha,Beta,_Colonnes,_Position,_Colonne1,Colonne,_Flag):-
 	Value >= Beta,!.
 cutoff(Colonne,Value,D,Alpha,Beta,Colonnes,Position,_Colonne1,BestColonne,Flag) :-
-	Alpha < Value, Value < Beta,
+	Alpha < Value, Value < Beta,!,
 	evaluate_and_choose(Colonnes,Position,D,Value,Beta,Colonne,BestColonne,Flag).
 
 cutoff(_Colonne, Value,D,Alpha,Beta,Colonnes,Position,Colonne1,BestColonne,Flag):-
@@ -136,13 +140,13 @@ getList(0,L),printVal(4,L),write('|'),getList(1,L1), printVal(4,L1),write('|'),g
  %%%% Start the game!
 init :- length(Board,7), assert(board(Board)), play().
 
-% Calculate the score of each player
+% Calculate the score of player P
 scoreColunm4([],_,0,[]).
 scoreColunm4([H|L],P,S,[V|Val]):-H==P,scoreColunm4(L,P,S1,Val),S is S1+V.
 scoreColunm4([H|L],P,S,[V|Val]):-H\==P,scoreColunm4(L,P,S,Val).
 
-score(-1,_,0,[]).
-score(N,P,S,[V|Val]):-getList(N,L),score(N1,P,S1,Val),scoreColunm4(L,P,S2,V),S is S1+S2,N is N1+1.
+score(-1,_,0,[],_).
+score(N,P,S,[V|Val],B):-getList(N,L,B),score(N1,P,S1,Val,B),scoreColunm4(L,P,S2,V),S is S1+S2,N is N1+1.
 
 %Horizontal
 caseWinTest(L):-L=[P,Q,R,S,_,_,_],P==Q,Q==R,R==S.
